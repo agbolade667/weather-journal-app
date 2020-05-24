@@ -60,3 +60,25 @@ const displayTemp = (event) => {
 }
 
 submit.addEventListener('click', displayTemp); 
+
+const getData = async (url = '/') => {
+  const response = await fetch(url, {
+    method: 'GET',
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    // Body data type must match "Content-Type" header        
+    // body: JSON.stringify(data),
+  });
+  try {
+    if (response.ok) {
+      const newData = await response.json();
+      console.log(newData);
+    }
+    // throw new Error('Bad request!');
+  } catch(error) {
+    console.log("error", 'Bad request!');
+  }
+}
+
