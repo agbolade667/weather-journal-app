@@ -1,8 +1,14 @@
-/* Global Variables */
+// Empty object to store current data
+const data = {};
 
-// Create a new date instance dynamically with JS
-let d = new Date();
-let newDate = d.getMonth()+'.'+ d.getDate()+'.'+ d.getFullYear();
+// Selecting page elements
+const inputField = document.getElementById('zip');
+const submit = document.getElementById('generate');
+const tempHolder = document.getElementById('temp');
+const feelingsHolder = document.getElementById('feelings');
+const date = document.getElementById('date');
+const temp = document.getElementById('temp');
+const content = document.getElementById('content');
 
 
 // Information to reach API
