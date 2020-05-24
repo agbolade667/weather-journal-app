@@ -10,17 +10,22 @@ const date = document.getElementById('date');
 const temp = document.getElementById('temp');
 const content = document.getElementById('content');
 
+// Get date and convert it to UTC standard
+const getDate = () => {
+  const date = new Date();
+  return date.toDateString();
+}
 
 // Information to reach API
 const url = 'http://api.openweathermap.org/data/2.5/weather?zip=';
 apiKey = '3de175b0afe436223913b04c6942d445';
 queryParams = '&units=metric&APPID=';
 
-// Selection of page elements
-const inputField = document.getElementById('zip');
-const submit = document.getElementById('generate');
-const tempHolder = document.getElementById('temp');
-
+/**
+ * Canadian postal codes would work, only if the "Forward sortation area" portion of the code 
+ * (i.e. the first 3 characters) is given.
+ * Below is the fuction to get first 3 characters of the zip code
+ */
 
  const getLocation = (zipCode) => {
   let location = "";
@@ -34,23 +39,23 @@ const tempHolder = document.getElementById('temp');
   } else {
     location = zipCode + ',us';
   }
-
+  
   return location;
  }
 
-// Used AJAX call to retrieve temperature from the Open Weather Map API
+// AJAX call for retrieveing temperature from Open Weather Map API
 const getTemp = async () => {
 
   const query = inputField.value;
-  // Here, you obtain the first 3 characters of the zipcode entered
+  // Get the first 3 characters of the zipcode entered
   const location = getLocation(query);
   const endpoint = url + location + queryParams + apiKey;
-  console.log(endpoint);
+  // console.log(endpoint);
   try {
     const response = await fetch(endpoint);
     if(response.ok) {
       const jsonResponse = await response.json();
-      console.log(jsonResponse.main.temp);
+      return jsonResponse.main.temp;
     } else {
       throw new Error('Request denied!');
     }
@@ -59,14 +64,6 @@ const getTemp = async () => {
   }
 }
 
-// Display the results to webpage
-const displayTemp = (event) => {
-  event.preventDefault();
-  getTemp();
-}
-
-submit.addEventListener('click', displayTemp); 
-
 const getData = async (url = '/') => {
   const response = await fetch(url, {
     method: 'GET',
@@ -74,17 +71,69 @@ const getData = async (url = '/') => {
     headers: {
       'Content-Type': 'application/json',
     },
-    // Body data type must match "Content-Type" header        
-    // body: JSON.stringify(data),
   });
   try {
     if (response.ok) {
       const newData = await response.json();
-      console.log(newData);
+      return newData[newData.length - 1];
     }
-    // throw new Error('Bad request!');
   } catch(error) {
     console.log("error", 'Bad request!');
   }
 }
 
+const postData = async (url = '/addData', data = {}) => {
+  const response = await fetch(url, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+    },        
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Request denied!');
+  }
+}
+
+// Push entries to server
+const saveData = async () => {
+  data.date = getDate();
+  data.feelings = feelingsHolder.value;
+  data.temp = await getTemp();
+  await postData('http://localhost:8000/addData/', data);
+}
+
+const updateUI = (data) => {
+  // If there is not entry at all, do nothing
+  if (Object.keys(data).length) {
+    date.innerHTML = data.date;
+    temp.innerHTML = data.temp + "&deg;C";
+    content.innerHTML = data.feelings;
+  }
+}
+
+// Clear entries
+const clearDisplay = () => {
+  inputField.value = "";
+  feelingsHolder.value = "";
+}
+
+// Display response to webpage
+const displayData = async (event) => {
+  // If there is an update and the generate button is clicked
+  if (event) {
+    event.preventDefault();
+    await saveData();
+    const newData = await getData('http://localhost:8000/');
+    updateUI(newData);
+    clearDisplay();
+  } else { // Retrieve the most recent entry
+    const newData = await getData('http://localhost:8000/');
+    updateUI(newData);
+  }
+  
+}
+
+displayData(); // Display the most recent entry on page load
+submit.addEventListener('click', displayData);
